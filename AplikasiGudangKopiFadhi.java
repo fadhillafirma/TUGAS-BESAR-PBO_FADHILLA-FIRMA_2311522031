@@ -167,7 +167,7 @@ public class AplikasiGudangKopiFadhi {
                     String jenisKopi = scanner.nextLine();
 
                     // Validasi jenis kopi, jika tidak valid langsung return ke menu utama
-                    List<String> jenisKopiValid = Arrays.asList("Arabica", "Robusta", "Luwak");
+                    List<String> jenisKopiValid = Arrays.asList("Arabica", "Robusta", "Luwak","Excelsa", "Liberika");
                     if (!jenisKopiValid.contains(jenisKopi)) {
                         System.out.println("Tidak ada jenis biji kopi yang sesuai.");
                         break; // Tidak lanjut ke tahap input berat kopi
