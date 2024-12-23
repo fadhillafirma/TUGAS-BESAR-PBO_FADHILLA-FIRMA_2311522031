@@ -127,6 +127,36 @@ class GudangKopiFadhi implements ManajemenKopi {
         }
     }
 
+    public void kurangiBeratStokKopi(String jenisKopi, double beratKurang) {
+        String query = "SELECT berat FROM StokKopi WHERE jenis_kopi = ?";
+        try (Connection connection = connect();
+                PreparedStatement pstmtSelect = connection.prepareStatement(query)) {
+
+            pstmtSelect.setString(1, jenisKopi);
+            ResultSet rs = pstmtSelect.executeQuery();
+
+            if (rs.next()) {
+                double beratSekarang = rs.getDouble("berat");
+                if (beratKurang > beratSekarang) {
+                    System.out.println("Error: Berat yang dikurangi melebihi stok saat ini.");
+                } else {
+                    String updateQuery = "UPDATE StokKopi SET berat = berat - ?, terakhir_diperbarui = ? WHERE jenis_kopi = ?";
+                    try (PreparedStatement pstmtUpdate = connection.prepareStatement(updateQuery)) {
+                        pstmtUpdate.setDouble(1, beratKurang);
+                        pstmtUpdate.setTimestamp(2, new Timestamp(new Date().getTime()));
+                        pstmtUpdate.setString(3, jenisKopi);
+                        pstmtUpdate.executeUpdate();
+                        System.out.println("Stok kopi berhasil dikurangi.");
+                    }
+                }
+            } else {
+                System.out.println("Jenis kopi tidak ditemukan.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error mengurangi stok kopi: " + e.getMessage());
+        }
+    }
+
     @Override
     public void hapusKopi(String jenisKopi) {
         String query = "DELETE FROM StokKopi WHERE jenis_kopi = ?";
@@ -167,7 +197,7 @@ public class AplikasiGudangKopiFadhi {
                     String jenisKopi = scanner.nextLine();
 
                     // Validasi jenis kopi, jika tidak valid langsung return ke menu utama
-                    List<String> jenisKopiValid = Arrays.asList("Arabica", "Robusta", "Luwak","Excelsa", "Liberika");
+                    List<String> jenisKopiValid = Arrays.asList("Arabica", "Robusta", "Luwak", "Excelsa", "Liberika");
                     if (!jenisKopiValid.contains(jenisKopi)) {
                         System.out.println("Tidak ada jenis biji kopi yang sesuai.");
                         break; // Tidak lanjut ke tahap input berat kopi
@@ -180,12 +210,32 @@ public class AplikasiGudangKopiFadhi {
                 case 2:
                     gudang.lihatStokKopi();
                     break;
+
                 case 3:
                     System.out.print("Masukkan jenis kopi yang akan diperbarui: ");
                     String jenisPerbarui = scanner.nextLine();
-                    System.out.print("Masukkan berat tambahan (kg): ");
-                    double beratTambahan = scanner.nextDouble();
-                    gudang.perbaruiStokKopi(jenisPerbarui, beratTambahan);
+
+                    // Memilih apakah menambah atau mengurangi berat
+                    System.out.println("Apa yang ingin Anda lakukan?");
+                    System.out.println("1. Tambah Berat");
+                    System.out.println("2. Kurangi Berat");
+                    System.out.print("Pilih opsi: ");
+                    int opsi = scanner.nextInt();
+
+                    // Validasi opsi
+                    if (opsi == 1) {
+                        System.out.print("Masukkan berat tambahan (kg): ");
+                        double beratTambahan = scanner.nextDouble();
+                        gudang.perbaruiStokKopi(jenisPerbarui, beratTambahan); // Tambah berat
+                    } else if (opsi == 2) {
+                        System.out.print("Masukkan berat yang akan dikurangi (kg): ");
+                        double beratKurang = scanner.nextDouble();
+
+                        // Perhitungan dan pengurangan berat dilakukan dalam metode baru
+                        gudang.kurangiBeratStokKopi(jenisPerbarui, beratKurang);
+                    } else {
+                        System.out.println("Pilihan tidak valid.");
+                    }
                     break;
                 case 4:
                     System.out.print("Masukkan jenis kopi yang akan dihapus: ");
